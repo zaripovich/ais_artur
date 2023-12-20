@@ -1,9 +1,9 @@
 import os
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.ext.asyncio import create_async_engine
-from sqlalchemy.orm import sessionmaker
+
 from dotenv import load_dotenv
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 
 
 # pylint: disable=E0213,C0115,C0116,W0718
@@ -41,6 +41,7 @@ async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False
 async def get_session() -> AsyncSession:
     async with async_session() as session:
         yield session
+
 
 
 from models.book import init_book

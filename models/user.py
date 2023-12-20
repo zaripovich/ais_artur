@@ -9,17 +9,18 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from db import Base, DbResult
 
 
-class GenreSchema(BaseModel):
+class UserSchema(BaseModel):
     id: int = Field(exclude=False, title="id")
-    name: str = Field(exclude=False, title="name")
+    username: str = Field(exclude=False, title="username")
+    password: str = Field(exclude=False, title="password")
 
 
 # pylint: disable=E0213,C0115,C0116,W0718
-class Genre(Base):
-    __tablename__ = "genries"
-
+class User(Base):
+    __tablename__ = "users"
     id = Column(Integer, autoincrement=True, primary_key=True)
-    name = Column(String, unique=True)
+    username = Column(String, unique=True)
+    password = Column(String, unique=False)
 
     async def add(self, session: AsyncSession) -> DbResult:
         try:
@@ -32,19 +33,19 @@ class Genre(Base):
             await session.rollback()
             return DbResult.error(str(e))
 
-    async def get_by_id(session: AsyncSession, genre_id: int) -> DbResult:
+    async def get_by_id(session: AsyncSession, user_id: int) -> DbResult:
         try:
-            result = await session.execute(select(Genre).where(Genre.id == genre_id))
+            result = await session.execute(select(User).where(User.id == user_id))
             data = result.scalars().first()
             await session.commit()
             return DbResult.result(data)
         except Exception as e:
             return DbResult.error(str(e))
 
-    async def get_by_name(session: AsyncSession, genre_name: int) -> DbResult:
+    async def get_by_username(session: AsyncSession, user_name: str) -> DbResult:
         try:
             result = await session.execute(
-                select(Genre).where(Genre.name == genre_name)
+                select(User).where(User.username == user_name)
             )
             data = result.scalars().first()
             await session.commit()
@@ -52,31 +53,31 @@ class Genre(Base):
         except Exception as e:
             return DbResult.error(str(e))
 
-    async def delete(session: AsyncSession, genre_id: int) -> DbResult:
+    async def delete(session: AsyncSession, user_id: int) -> DbResult:
         try:
-            _ = await session.execute(delete(Genre).where(Genre.id == genre_id))
+            _ = await session.execute(delete(User).where(User.id == user_id))
             await session.commit()
             return DbResult.result(True)
         except Exception as e:
             await session.rollback()
             return DbResult.error(str(e), False)
 
-    def from_one_to_schema(genre: Genre) -> GenreSchema:
+    def from_one_to_schema(user: User) -> UserSchema:
         try:
-            genre_schema = GenreSchema(id=genre.id, name=genre.name)
-            return genre_schema
+            user_schema = UserSchema(id=user.id, name=user.name)
+            return user_schema
         except Exception as e:
             print(e)
             return None
 
-    def from_list_to_schema(genries: List[Genre]) -> list[GenreSchema]:
+    def from_list_to_schema(users: List[User]) -> list[UserSchema]:
         try:
-            return [Genre.from_one_to_schema(g) for g in genries]
+            return [User.from_one_to_schema(g) for g in users]
         except Exception:
             return []
 
 
-async def init_genre(engine: AsyncEngine):
+async def init_user(engine: AsyncEngine):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)

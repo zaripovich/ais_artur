@@ -1,14 +1,13 @@
 from __future__ import annotations
-from sqlalchemy import Column
-from sqlalchemy import String
-from sqlalchemy import ForeignKey
-from sqlalchemy import Integer
+
+from typing import List
+
+from pydantic import BaseModel, Field
+from sqlalchemy import Column, ForeignKey, Integer, String, delete, select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.orm import mapped_column
-from sqlalchemy import select, delete
-from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 
 from db import Base, DbResult
-from pydantic import BaseModel, Field
 
 
 class BookSchema(BaseModel):
@@ -84,7 +83,7 @@ class Book(Base):
         except Exception:
             return None
 
-    def from_list_to_schema(books: [Book]) -> list[BookSchema]:
+    def from_list_to_schema(books: List[Book]) -> list[BookSchema]:
         try:
             return [Book.from_one_to_schema(b) for b in books]
         except Exception:

@@ -1,13 +1,13 @@
 from __future__ import annotations
-from sqlalchemy import Column
-from sqlalchemy import String
-from sqlalchemy import ForeignKey
-from sqlalchemy import Integer
-from sqlalchemy.orm import mapped_column
-from sqlalchemy import select, delete
-from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
-from db import Base, DbResult
+
+from typing import List
+
 from pydantic import BaseModel, Field
+from sqlalchemy import Column, ForeignKey, Integer, String, delete, select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from sqlalchemy.orm import mapped_column
+
+from db import Base, DbResult
 
 
 class ReviewSchema(BaseModel):
@@ -77,7 +77,7 @@ class Review(Base):
         except Exception:
             return None
 
-    def from_list_to_schema(reviews: [Review]) -> list[ReviewSchema]:
+    def from_list_to_schema(reviews: List[Review]) -> list[ReviewSchema]:
         try:
             return [Review.from_one_to_schema(r) for r in reviews]
         except Exception:

@@ -1,10 +1,13 @@
-from fastapi import FastAPI
+from typing import Annotated, Optional
+
+from fastapi import Depends, FastAPI
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import Depends
-from db import get_session, DbResult
+
+from db import DbResult, get_session
 from models.book import Book, BookSchema
-from typing import Optional
+from models.user import User
+from routes.auth import get_current_user
 
 
 class NewBook(BaseModel):
@@ -62,9 +65,13 @@ class BooksResponse(BaseModel):
         super().__init__(code=code, error_desc=error_desc, value=value)
 
 
-def init(app: FastAPI):
+def init(app: FastAPI, oauth2_scheme):
     @app.post("/books/add", response_model=AddResponse)
-    async def add(data: NewBook, session: AsyncSession = Depends(get_session)):
+    async def add(
+        user: Annotated[str, Depends(oauth2_scheme)],
+        data: NewBook,
+        session: AsyncSession = Depends(get_session),
+    ):
         try:
             new_book = Book()
             new_book.name = data.name
@@ -78,7 +85,11 @@ def init(app: FastAPI):
             return AddResponse(code=500, error_desc=str(e))
 
     @app.get("/books/get/id/{id}", response_model=BookResponse)
-    async def get_by_id(id: int, session: AsyncSession = Depends(get_session)):
+    async def get_by_id(
+        current_user: Annotated[User, Depends(get_current_user)],
+        id: int,
+        session: AsyncSession = Depends(get_session),
+    ):
         try:
             result: DbResult = await Book.get_by_id(session, id)
             if result.is_error is True:
@@ -88,7 +99,11 @@ def init(app: FastAPI):
             return BookResponse(code=500, error_desc=str(e))
 
     @app.get("/books/get/genre/{genre}", response_model=BooksResponse)
-    async def get_by_genre(genre: str, session: AsyncSession = Depends(get_session)):
+    async def get_by_genre(
+        current_user: Annotated[User, Depends(get_current_user)],
+        genre: str,
+        session: AsyncSession = Depends(get_session),
+    ):
         try:
             result: DbResult = await Book.get_by_genre(session, genre)
             if result.is_error is True:
@@ -98,7 +113,11 @@ def init(app: FastAPI):
             return BooksResponse(code=500, error_desc=str(e))
 
     @app.get("/books/get/name/{name}", response_model=BookResponse)
-    async def get_by_name(name: str, session: AsyncSession = Depends(get_session)):
+    async def get_by_name(
+        current_user: Annotated[User, Depends(get_current_user)],
+        name: str,
+        session: AsyncSession = Depends(get_session),
+    ):
         try:
             result: DbResult = await Book.get_by_name(session, name)
             if result.is_error is True:
@@ -108,7 +127,11 @@ def init(app: FastAPI):
             return BookResponse(code=500, error_desc=str(e))
 
     @app.delete("/books/delete/{id}", response_model=DeleteResponse)
-    async def delete(id: int, session: AsyncSession = Depends(get_session)):
+    async def delete(
+        current_user: Annotated[User, Depends(get_current_user)],
+        id: int,
+        session: AsyncSession = Depends(get_session),
+    ):
         try:
             result = await Book.delete(session, id)
             if result is False:

@@ -1,12 +1,13 @@
-from fastapi import FastAPI
-import pydantic
-from typing import Any
+from typing import Annotated, Any, Optional
+
+from fastapi import Depends, FastAPI
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import Depends
+
 from db import get_session
 from models.genre import Genre, GenreSchema
-from typing import Optional
+from models.user import User
+from routes.auth import get_current_user
 
 
 class NewGenre(BaseModel):
@@ -69,9 +70,13 @@ class GenriesResponse(BaseModel):
         super().__init__(code=code, error_desc=error_desc, value=value)
 
 
-def init(app: FastAPI):
+def init(app: FastAPI, oauth2_scheme):
     @app.post("/genries/add", response_model=AddResponse)
-    async def add(data: NewGenre, session: AsyncSession = Depends(get_session)) -> Any:
+    async def add(
+        current_user: Annotated[User, Depends(get_current_user)],
+        data: NewGenre,
+        session: AsyncSession = Depends(get_session),
+    ) -> Any:
         try:
             new_genre = Genre()
             new_genre.name = data.name
@@ -83,7 +88,11 @@ def init(app: FastAPI):
             return AddResponse(code=500, error_desc=str(e))
 
     @app.get("/genries/get/id/{id}", response_model=GenreResponse)
-    async def get_by_id(id: int, session: AsyncSession = Depends(get_session)) -> Any:
+    async def get_by_id(
+        current_user: Annotated[User, Depends(get_current_user)],
+        id: int,
+        session: AsyncSession = Depends(get_session),
+    ) -> Any:
         try:
             result = await Genre.get_by_id(session, id)
             if result.is_error is True:
@@ -94,7 +103,9 @@ def init(app: FastAPI):
 
     @app.get("/genries/get/name/{name}", response_model=GenreResponse)
     async def get_by_name(
-        name: str, session: AsyncSession = Depends(get_session)
+        current_user: Annotated[User, Depends(get_current_user)],
+        name: str,
+        session: AsyncSession = Depends(get_session),
     ) -> Any:
         try:
             result = await Genre.get_by_name(session, name)
@@ -105,7 +116,11 @@ def init(app: FastAPI):
             return GenriesResponse(code=500, error_desc=str(e))
 
     @app.delete("/genries/delete/{id}", response_model=DeleteResponse)
-    async def delete(id: int, session: AsyncSession = Depends(get_session)) -> Any:
+    async def delete(
+        current_user: Annotated[User, Depends(get_current_user)],
+        id: int,
+        session: AsyncSession = Depends(get_session),
+    ) -> Any:
         try:
             result = await Genre.delete(session, id)
             if result.is_error is True:
