@@ -13,8 +13,7 @@ from db import Base, DbResult
 class BookSchema(BaseModel):
     id: int = Field(exclude=False, title="id")
     name: str = Field(exclude=False, title="name")
-    description: str = Field(exclude=False, title="description")
-    genre_id: int = Field(exclude=False, title="genre_id")
+    author: str = Field(exclude=False, title="author")
 
 
 # pylint: disable=E0213,C0115,C0116,W0718
@@ -23,8 +22,7 @@ class Book(Base):
 
     id = Column(Integer, autoincrement=True, primary_key=True)
     name = Column(String, unique=True)
-    description = Column(String)
-    genre_id = mapped_column(ForeignKey("genries.id"))
+    author = Column(String)
 
     async def add(self, session: AsyncSession) -> DbResult:
         try:
@@ -53,15 +51,6 @@ class Book(Base):
         except Exception as e:
             return DbResult.error(str(e))
 
-    async def get_by_genre(session: AsyncSession, genre: int) -> DbResult:
-        try:
-            result = await session.execute(select(Book).where(Book.genre_id == genre))
-            data = result.scalars().all()
-            await session.commit()
-            return DbResult.result(data)
-        except Exception as e:
-            return DbResult.error(str(e))
-
     async def delete(session: AsyncSession, book_id: int) -> DbResult:
         try:
             _ = await session.execute(delete(Book).where(Book.id == book_id))
@@ -76,8 +65,7 @@ class Book(Base):
             book_schema = BookSchema(
                 id=book.id,
                 name=book.name,
-                description=book.description,
-                genre_id=book.genre_id,
+                author=book.author,
             )
             return book_schema
         except Exception:

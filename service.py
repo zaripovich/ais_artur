@@ -8,7 +8,7 @@ from fastapi.security import OAuth2PasswordBearer
 from fastapi_async_sqlalchemy import SQLAlchemyMiddleware
 
 # pylint: disable=E0401
-from routes import auth, books, genries, reviews, users
+from routes import auth, books, posts, users
 
 dotenv_path = os.path.join(os.path.dirname(__file__), ".env")
 if os.path.exists(dotenv_path):
@@ -33,10 +33,9 @@ def custom_openapi():
 
 
 def run():
-    books.init(app,oauth2_scheme)
-    genries.init(app,oauth2_scheme)
-    reviews.init(app,oauth2_scheme)
-    users.init(app,oauth2_scheme)
+    books.init(app, oauth2_scheme)
+    posts.init(app, oauth2_scheme)
+    users.init(app, oauth2_scheme)
     auth.init(app)
     app.openapi_schema = custom_openapi()
     uvicorn.run(app, host=os.environ.get("HOST"), port=int(os.environ.get("PORT")))

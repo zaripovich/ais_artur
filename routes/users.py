@@ -11,6 +11,7 @@ from routes.auth import get_current_user
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+
 class NewUser(BaseModel):
     username: str
     password: str
@@ -18,13 +19,13 @@ class NewUser(BaseModel):
 
 class DeleteResponse(BaseModel):
     code: int = Field(exclude=False, title="code")
-    error_desc: str = Field(exclude=False, title="description")
+    error_desc: Optional[str] = Field(exclude=False, title="description")
     value: Optional[bool] = Field(exclude=False, title="value")
 
     def __init__(
         self,
         code: int = 200,
-        error_desc: str = "",
+        error_desc: Optional[str] = None,
         value: Optional[bool] = True,
     ):
         super().__init__(code=code, error_desc=error_desc, value=value)
@@ -32,27 +33,27 @@ class DeleteResponse(BaseModel):
 
 class AddResponse(BaseModel):
     code: int = Field(exclude=False, title="code")
-    error_desc: str = Field(exclude=False, title="description")
+    error_desc: Optional[str] = Field(exclude=False, title="description")
     value: Optional[int] = Field(exclude=False, title="value")
 
     def __init__(
         self,
         code: int = 200,
-        error_desc: str = "",
+        error_desc: Optional[str] = None,
         value: Optional[int] = 1,
     ):
         super().__init__(code=code, error_desc=error_desc, value=value)
 
 
-class GenreResponse(BaseModel):
+class UserResponse(BaseModel):
     code: int = Field(exclude=False, title="code")
-    error_desc: str = Field(exclude=False, title="description")
+    error_desc: Optional[str] = Field(exclude=False, title="description")
     value: Optional[UserSchema] = Field(exclude=False, title="value")
 
     def __init__(
         self,
         code: int = 200,
-        error_desc: str = "",
+        error_desc: Optional[str] = None,
         value: Optional[UserSchema] = None,
     ):
         super().__init__(code=code, error_desc=error_desc, value=value)
@@ -60,13 +61,13 @@ class GenreResponse(BaseModel):
 
 class UsersResponse(BaseModel):
     code: int = Field(exclude=False, title="code")
-    error_desc: str = Field(exclude=False, title="description")
+    error_desc: Optional[str] = Field(exclude=False, title="description")
     value: Optional[list[UserSchema]] = Field(exclude=False, title="value")
 
     def __init__(
         self,
         code: int = 200,
-        error_desc: str = "",
+        error_desc: Optional[str] = None,
         value: Optional[list[UserSchema]] = [],
     ):
         super().__init__(code=code, error_desc=error_desc, value=value)
@@ -89,7 +90,7 @@ def init(app: FastAPI, oauth2_scheme):
         except Exception as e:
             return AddResponse(code=500, error_desc=str(e))
 
-    @app.get("/users/get/id/{id}", response_model=GenreResponse)
+    @app.get("/users/get/id/{id}", response_model=UserResponse)
     async def get_by_id(
         current_user: Annotated[User, Depends(get_current_user)],
         id: int,
@@ -98,12 +99,16 @@ def init(app: FastAPI, oauth2_scheme):
         try:
             result = await User.get_by_id(session, id)
             if result.is_error is True:
-                return GenreResponse(code=500, error_desc=result.error_desc)
-            return GenreResponse(code=200, value=User.from_one_to_schema(result.value))
+                return UserResponse(code=500, error_desc=result.error_desc)
+            return UserResponse(code=200, value=User.from_one_to_schema(result.value))
         except Exception as e:
-            return GenreResponse(code=500, error_desc=str(e))
+            return UserResponse(code=500, error_desc=str(e))
 
-    @app.get("/users/get/username/{username}", response_model=GenreResponse)
+    @app.get(
+        "/users/get/username/{username}",
+        response_model=UserResponse,
+        response_model_exclude_none=True,
+    )
     async def get_by_username(
         current_user: Annotated[User, Depends(get_current_user)],
         username: str,
@@ -112,12 +117,16 @@ def init(app: FastAPI, oauth2_scheme):
         try:
             result = await User.get_by_username(session, username)
             if result.is_error is True:
-                return GenreResponse(code=500, error_desc=result.error_desc)
-            return GenreResponse(code=200, value=User.from_one_to_schema(result.value))
+                return UserResponse(code=500, error_desc=result.error_desc)
+            return UserResponse(code=200, value=User.from_one_to_schema(result.value))
         except Exception as e:
             return UsersResponse(code=500, error_desc=str(e))
 
-    @app.delete("/users/delete/{id}", response_model=DeleteResponse)
+    @app.delete(
+        "/users/delete/{id}",
+        response_model=DeleteResponse,
+        response_model_exclude_none=True,
+    )
     async def delete(
         current_user: Annotated[User, Depends(get_current_user)],
         id: int,

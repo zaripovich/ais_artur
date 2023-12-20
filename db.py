@@ -43,14 +43,17 @@ async def get_session() -> AsyncSession:
         yield session
 
 
-
 from models.book import init_book
-from models.genre import init_genre
-from models.review import init_review
+from models.user import init_user
+from models.post import init_post
 
 
 async def init_models():
-    await init_book(engine)
-    await init_genre(engine)
-    await init_review(engine)
-    print("Done")
+    try:
+        if os.environ.get("REINIT_DB") == "1":
+            await init_book(engine)
+            await init_user(engine)
+            await init_post(engine)
+        print("Done")
+    except Exception as e:
+        print(e)

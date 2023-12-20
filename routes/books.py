@@ -12,18 +12,20 @@ from routes.auth import get_current_user
 
 class NewBook(BaseModel):
     name: str = Field()
-    description: str = Field()
-    genre_id: int = Field()
+    author: str = Field()
 
 
 # pylint: disable=E0213,C0115,C0116,W0718
 class DeleteResponse(BaseModel):
     code: int = Field(exclude=False, title="code")
-    error_desc: str = Field(exclude=False, title="description")
+    error_desc: Optional[str] = Field(exclude=False, title="description")
     value: Optional[bool] = Field(exclude=False, title="value")
 
     def __init__(
-        self, code: int = 200, error_desc: str = "", value: Optional[bool] = True
+        self,
+        code: int = 200,
+        error_desc: Optional[str] = None,
+        value: Optional[bool] = True,
     ):
         super().__init__(code=code, error_desc=error_desc, value=value)
 
@@ -31,21 +33,26 @@ class DeleteResponse(BaseModel):
 # pylint: disable=E0213,C0115,C0116,W0718
 class AddResponse(BaseModel):
     code: int = Field(exclude=False, title="code")
-    error_desc: str = Field(exclude=False, title="description")
+    error_desc: Optional[str] = Field(exclude=False, title="description")
     value: Optional[int] = Field(exclude=False, title="value")
 
-    def __init__(self, code: int = 200, error_desc: str = "", value: Optional[int] = 1):
+    def __init__(
+        self, code: int = 200, error_desc: Optional[str] = "", value: Optional[int] = 1
+    ):
         super().__init__(code=code, error_desc=error_desc, value=value)
 
 
 # pylint: disable=E0213,C0115,C0116,W0718
 class BookResponse(BaseModel):
     code: int = Field(exclude=False, title="code")
-    error_desc: str = Field(exclude=False, title="description")
+    error_desc: Optional[str] = Field(exclude=False, title="description")
     value: Optional[BookSchema] = Field(exclude=False, title="value")
 
     def __init__(
-        self, code: int = 200, error_desc: str = "", value: Optional[BookSchema] = None
+        self,
+        code: int = 200,
+        error_desc: Optional[str] = None,
+        value: Optional[BookSchema] = None,
     ):
         super().__init__(code=code, error_desc=error_desc, value=value)
 
@@ -53,20 +60,22 @@ class BookResponse(BaseModel):
 # pylint: disable=E0213,C0115,C0116,W0718
 class BooksResponse(BaseModel):
     code: int = Field(exclude=False, title="code")
-    error_desc: str = Field(exclude=False, title="description")
+    error_desc: Optional[str] = Field(exclude=False, title="description")
     value: Optional[list[BookSchema]] = Field(exclude=False, title="value")
 
     def __init__(
         self,
         code: int = 200,
-        error_desc: str = "",
+        error_desc: Optional[str] = None,
         value: Optional[list[BookSchema]] = [],
     ):
         super().__init__(code=code, error_desc=error_desc, value=value)
 
 
 def init(app: FastAPI, oauth2_scheme):
-    @app.post("/books/add", response_model=AddResponse)
+    @app.post(
+        "/books/add", response_model=AddResponse, response_model_exclude_none=True
+    )
     async def add(
         user: Annotated[str, Depends(oauth2_scheme)],
         data: NewBook,
@@ -75,8 +84,7 @@ def init(app: FastAPI, oauth2_scheme):
         try:
             new_book = Book()
             new_book.name = data.name
-            new_book.description = data.description
-            new_book.genre_id = data.genre_id
+            new_book.author = data.author
             result = await new_book.add(session)
             if result.is_error is True:
                 return AddResponse(code=500, error_desc=result.error_desc)
@@ -84,7 +92,11 @@ def init(app: FastAPI, oauth2_scheme):
         except Exception as e:
             return AddResponse(code=500, error_desc=str(e))
 
-    @app.get("/books/get/id/{id}", response_model=BookResponse)
+    @app.get(
+        "/books/get/id/{id}",
+        response_model=BookResponse,
+        response_model_exclude_none=True,
+    )
     async def get_by_id(
         current_user: Annotated[User, Depends(get_current_user)],
         id: int,
@@ -98,7 +110,11 @@ def init(app: FastAPI, oauth2_scheme):
         except Exception as e:
             return BookResponse(code=500, error_desc=str(e))
 
-    @app.get("/books/get/genre/{genre}", response_model=BooksResponse)
+    @app.get(
+        "/books/get/genre/{genre}",
+        response_model=BooksResponse,
+        response_model_exclude_none=True,
+    )
     async def get_by_genre(
         current_user: Annotated[User, Depends(get_current_user)],
         genre: str,
@@ -112,7 +128,11 @@ def init(app: FastAPI, oauth2_scheme):
         except Exception as e:
             return BooksResponse(code=500, error_desc=str(e))
 
-    @app.get("/books/get/name/{name}", response_model=BookResponse)
+    @app.get(
+        "/books/get/name/{name}",
+        response_model=BookResponse,
+        response_model_exclude_none=True,
+    )
     async def get_by_name(
         current_user: Annotated[User, Depends(get_current_user)],
         name: str,
@@ -126,7 +146,11 @@ def init(app: FastAPI, oauth2_scheme):
         except Exception as e:
             return BookResponse(code=500, error_desc=str(e))
 
-    @app.delete("/books/delete/{id}", response_model=DeleteResponse)
+    @app.delete(
+        "/books/delete/{id}",
+        response_model=DeleteResponse,
+        response_model_exclude_none=True,
+    )
     async def delete(
         current_user: Annotated[User, Depends(get_current_user)],
         id: int,
