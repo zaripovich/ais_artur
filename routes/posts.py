@@ -3,10 +3,10 @@ from typing import Annotated, Optional
 from fastapi import Depends, FastAPI
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from db import DbResult, get_session
 from models.post import Post, PostSchema
 from models.user import User
-from models.book import Book
 from routes.auth import get_current_user
 
 
@@ -14,7 +14,8 @@ class NewPost(BaseModel):
     user_id: int
     title: str
     text: str
-    book_id: int
+    book_name: str
+    book_author: str
 
 
 class DeleteResponse(BaseModel):
@@ -86,14 +87,12 @@ def init_posts_routes(app: FastAPI, oauth2_scheme):
             user = await User.get_by_id(session, data.user_id)
             if user.is_error:
                 raise Exception("User with this user_id not found")
-            book = await Book.get_by_id(session, data.book_id)
-            if book.is_error:
-                raise Exception("Book with this book_id not found")
             new_post = Post()
             new_post.title = data.title
             new_post.user_id = user.value.id
             new_post.text = data.text
-            new_post.book_id = book.value.id
+            new_post.book_name = data.book_name
+            new_post.book_author = data.book_author
             result = await new_post.add(session)
             if result.is_error is True:
                 return AddResponse(code=500, error_desc=result.error_desc)
@@ -109,6 +108,22 @@ def init_posts_routes(app: FastAPI, oauth2_scheme):
     ):
         try:
             result: DbResult = await Post.get_by_page(session, page)
+            if result.is_error is True:
+                return PostsResponse(code=500, error_desc=result.error_desc)
+            return PostsResponse(
+                code=200, value=await Post.from_list_to_schema(session, result.value)
+            )
+        except Exception as e:
+            return PostsResponse(code=500, error_desc=str(e))
+    
+
+    @app.get("/posts/get/all", response_model=PostsResponse)
+    async def get_by_page(
+        current_user: Annotated[User, Depends(get_current_user)],
+        session: AsyncSession = Depends(get_session),
+    ):
+        try:
+            result: DbResult = await Post.get_all(session)
             if result.is_error is True:
                 return PostsResponse(code=500, error_desc=result.error_desc)
             return PostsResponse(
