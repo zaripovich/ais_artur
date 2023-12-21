@@ -72,12 +72,12 @@ class BooksResponse(BaseModel):
         super().__init__(code=code, error_desc=error_desc, value=value)
 
 
-def init(app: FastAPI, oauth2_scheme):
+def init_books_routes(app: FastAPI, oauth2_scheme):
     @app.post(
         "/books/add", response_model=AddResponse, response_model_exclude_none=True
     )
     async def add(
-        user: Annotated[str, Depends(oauth2_scheme)],
+        current_user: Annotated[User, Depends(get_current_user)],
         data: NewBook,
         session: AsyncSession = Depends(get_session),
     ):
@@ -92,11 +92,7 @@ def init(app: FastAPI, oauth2_scheme):
         except Exception as e:
             return AddResponse(code=500, error_desc=str(e))
 
-    @app.get(
-        "/books/get/id/{id}",
-        response_model=BookResponse,
-        response_model_exclude_none=True,
-    )
+    @app.get("/books/get/id/{id}", response_model=BookResponse)
     async def get_by_id(
         current_user: Annotated[User, Depends(get_current_user)],
         id: int,
@@ -110,11 +106,7 @@ def init(app: FastAPI, oauth2_scheme):
         except Exception as e:
             return BookResponse(code=500, error_desc=str(e))
 
-    @app.get(
-        "/books/get/genre/{genre}",
-        response_model=BooksResponse,
-        response_model_exclude_none=True,
-    )
+    @app.get("/books/get/genre/{genre}", response_model=BooksResponse)
     async def get_by_genre(
         current_user: Annotated[User, Depends(get_current_user)],
         genre: str,
@@ -128,11 +120,7 @@ def init(app: FastAPI, oauth2_scheme):
         except Exception as e:
             return BooksResponse(code=500, error_desc=str(e))
 
-    @app.get(
-        "/books/get/name/{name}",
-        response_model=BookResponse,
-        response_model_exclude_none=True,
-    )
+    @app.get("/books/get/name/{name}", response_model=BookResponse)
     async def get_by_name(
         current_user: Annotated[User, Depends(get_current_user)],
         name: str,
@@ -146,11 +134,7 @@ def init(app: FastAPI, oauth2_scheme):
         except Exception as e:
             return BookResponse(code=500, error_desc=str(e))
 
-    @app.delete(
-        "/books/delete/{id}",
-        response_model=DeleteResponse,
-        response_model_exclude_none=True,
-    )
+    @app.delete("/books/delete/{id}", response_model=DeleteResponse)
     async def delete(
         current_user: Annotated[User, Depends(get_current_user)],
         id: int,

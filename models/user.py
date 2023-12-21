@@ -64,7 +64,9 @@ class User(Base):
 
     def from_one_to_schema(user: User) -> UserSchema:
         try:
-            user_schema = UserSchema(id=user.id, name=user.name)
+            user_schema = UserSchema(
+                id=user.id, username=user.username, password=user.password
+            )
             return user_schema
         except Exception as e:
             print(e)

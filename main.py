@@ -1,6 +1,5 @@
 import asyncio
-from db import init_models
-from service import run
+from service import run, init_models
 
 
 if __name__ == "__main__":

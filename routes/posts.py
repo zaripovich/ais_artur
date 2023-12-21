@@ -73,7 +73,7 @@ class PostsResponse(BaseModel):
         super().__init__(code=code, error_desc=error_desc, value=value)
 
 
-def init(app: FastAPI, oauth2_scheme):
+def init_posts_routes(app: FastAPI, oauth2_scheme):
     @app.post(
         "/posts/add", response_model=AddResponse, response_model_exclude_none=True
     )
@@ -101,11 +101,7 @@ def init(app: FastAPI, oauth2_scheme):
         except Exception as e:
             return AddResponse(code=500, error_desc=str(e))
 
-    @app.get(
-        "/posts/get/page/{page}",
-        response_model=PostsResponse,
-        response_model_exclude_none=True,
-    )
+    @app.get("/posts/get/page/{page}", response_model=PostsResponse)
     async def get_by_page(
         current_user: Annotated[User, Depends(get_current_user)],
         page: int,
@@ -121,11 +117,7 @@ def init(app: FastAPI, oauth2_scheme):
         except Exception as e:
             return PostsResponse(code=500, error_desc=str(e))
 
-    @app.get(
-        "/posts/get/id/{id}",
-        response_model=PostResponse,
-        response_model_exclude_none=True,
-    )
+    @app.get("/posts/get/id/{id}", response_model=PostResponse)
     async def get_by_id(
         current_user: Annotated[User, Depends(get_current_user)],
         id: int,
@@ -141,11 +133,7 @@ def init(app: FastAPI, oauth2_scheme):
         except Exception as e:
             return PostResponse(code=500, error_desc=str(e))
 
-    @app.get(
-        "/posts/get/username/{username}",
-        response_model=PostsResponse,
-        response_model_exclude_none=True,
-    )
+    @app.get("/posts/get/username/{username}", response_model=PostsResponse)
     async def get_by_username(
         current_user: Annotated[User, Depends(get_current_user)],
         username: str,
@@ -161,11 +149,7 @@ def init(app: FastAPI, oauth2_scheme):
         except Exception as e:
             return PostsResponse(code=500, error_desc=str(e))
 
-    @app.get(
-        "/posts/get/title/{title}",
-        response_model=PostsResponse,
-        response_model_exclude_none=True,
-    )
+    @app.get("/posts/get/title/{title}", response_model=PostsResponse)
     async def get_by_title(
         current_user: Annotated[User, Depends(get_current_user)],
         title: str,
@@ -181,11 +165,7 @@ def init(app: FastAPI, oauth2_scheme):
         except Exception as e:
             return PostsResponse(code=500, error_desc=str(e))
 
-    @app.delete(
-        "/posts/delete/{id}",
-        response_model=DeleteResponse,
-        response_model_exclude_none=True,
-    )
+    @app.delete("/posts/delete/{id}", response_model=DeleteResponse)
     async def delete(
         current_user: Annotated[User, Depends(get_current_user)],
         id: int,

@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Annotated
-
+import os
+from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
@@ -16,15 +17,22 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
+
 class TokenData(BaseModel):
     username: str | None = None
 
 
-SECRET_KEY = "4e1d0ae0bebf19c2249899c349e06c885c3d7a2ca859c9f22d0749583945ec99"
+dotenv_path = os.path.join(os.path.dirname(__file__), ".env")
+if os.path.exists(dotenv_path):
+    load_dotenv(dotenv_path)
+
+
+SECRET_KEY = os.environ["SECRET_KEY"]
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 120
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+
 
 async def authenticate_user(session, username: str, password: str):
     user = await User.get_by_username(session, username)
@@ -46,7 +54,10 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     return encoded_jwt
 
 
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)],session: AsyncSession = Depends(get_session)):
+async def get_current_user(
+    token: Annotated[str, Depends(oauth2_scheme)],
+    session: AsyncSession = Depends(get_session),
+):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -66,12 +77,11 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)],session
     return user.value
 
 
-def init(app: FastAPI):
-    
+def init_auth_routes(app: FastAPI):
     @app.post("/login", response_model=Token)
     async def login_for_access_token(
         form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-        session: AsyncSession = Depends(get_session)
+        session: AsyncSession = Depends(get_session),
     ):
         user = await authenticate_user(session, form_data.username, form_data.password)
         if not user:
@@ -85,4 +95,3 @@ def init(app: FastAPI):
             data={"sub": user.username}, expires_delta=access_token_expires
         )
         return {"access_token": access_token, "token_type": "bearer"}
-

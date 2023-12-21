@@ -73,7 +73,7 @@ class UsersResponse(BaseModel):
         super().__init__(code=code, error_desc=error_desc, value=value)
 
 
-def init(app: FastAPI, oauth2_scheme):
+def init_users_routes(app: FastAPI, oauth2_scheme):
     @app.post("/reg", response_model=AddResponse)
     async def add(
         data: NewUser,
@@ -104,11 +104,7 @@ def init(app: FastAPI, oauth2_scheme):
         except Exception as e:
             return UserResponse(code=500, error_desc=str(e))
 
-    @app.get(
-        "/users/get/username/{username}",
-        response_model=UserResponse,
-        response_model_exclude_none=True,
-    )
+    @app.get("/users/get/username/{username}", response_model=UserResponse)
     async def get_by_username(
         current_user: Annotated[User, Depends(get_current_user)],
         username: str,
@@ -122,11 +118,7 @@ def init(app: FastAPI, oauth2_scheme):
         except Exception as e:
             return UsersResponse(code=500, error_desc=str(e))
 
-    @app.delete(
-        "/users/delete/{id}",
-        response_model=DeleteResponse,
-        response_model_exclude_none=True,
-    )
+    @app.delete("/users/delete/{id}", response_model=DeleteResponse)
     async def delete(
         current_user: Annotated[User, Depends(get_current_user)],
         id: int,

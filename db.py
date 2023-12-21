@@ -2,7 +2,7 @@ import os
 
 from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 
@@ -41,19 +41,3 @@ async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False
 async def get_session() -> AsyncSession:
     async with async_session() as session:
         yield session
-
-
-from models.book import init_book
-from models.user import init_user
-from models.post import init_post
-
-
-async def init_models():
-    try:
-        if os.environ.get("REINIT_DB") == "1":
-            await init_book(engine)
-            await init_user(engine)
-            await init_post(engine)
-        print("Done")
-    except Exception as e:
-        print(e)
