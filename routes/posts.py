@@ -119,7 +119,6 @@ def init_posts_routes(app: FastAPI, oauth2_scheme):
 
     @app.get("/posts/get/all", response_model=PostsResponse)
     async def get_by_page(
-        current_user: Annotated[User, Depends(get_current_user)],
         session: AsyncSession = Depends(get_session),
     ):
         try:
